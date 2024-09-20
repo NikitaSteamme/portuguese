@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portuguese Matching Game</title>
+    <style>
+        /* General page styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Ensures full height even on mobile */
+        }
+
+        /* Container for the game area */
+        #game-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%; /* Reduced width for better centering on mobile */
+            max-width: 1200px; /* Limits the maximum width for larger screens */
+            margin: 0 auto;
+        }
+
+        /* Styles for the English and Portuguese columns */
+        #english-column, #portuguese-column {
+            display: flex;
+            flex-direction: column;
+            width: 45%; /* Takes 45% of the available width */
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 10px 0;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #e0e0e0; /* Slight hover effect */
+        }
+
+        button.success {
+            background-color: #c8e6c9; /* Pastel green for correct */
+            border-color: #4caf50;
+        }
+
+        button.error {
+            background-color: #ffcccb; /* Pastel red for incorrect */
+            border-color: #f44336;
+        }
+
+        button.selected {
+            background-color: #fff59d; /* Pastel yellow for selection */
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Animation for hiding buttons */
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                height: auto;
+            }
+            to {
+                opacity: 0;
+                height: 0;
+                margin: 0;
+                padding: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        button.hidden {
+            animation: fadeOut 0.3s forwards;
+            pointer-events: none; /* Disable clicking on hidden buttons */
+        }
+
+        /* Media query for mobile devices */
+        @media (max-width: 768px) {
+            #game-container {
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%; /* Make the container take the full width */
+                padding: 0 10px; /* Add padding for small screens */
+                margin-top: 80px; /* Add space from the top to avoid overlap with the score */
+            }
+
+            #english-column, #portuguese-column {
+                width: 45%; /* Maintain equal column width on small screens */
+            }
+
+            button {
+                font-size: 14px; /* Slightly smaller text on mobile */
+                padding: 10px 16px;
+            }
+
+            #score {
+                font-size: 20px;
+            }
+        }
+
+
+    </style>
+</head>
+<body>
+<!-- Score display -->
+<div id="score">Score: 0</div>
+
+<!-- Category selection -->
+<div id="category-selection">
+    <h1>Select a Category</h1>
+    <!-- Category buttons will be dynamically inserted here -->
+</div>
+
+<!-- Matching game container (hidden initially) -->
+<div class="columns" id="game-container" style="display:none;">
+    <!-- English column -->
+    <div class="column" id="english-column">
+        <!-- Buttons for English words/phrases will be inserted here -->
+    </div>
+
+    <!-- Portuguese column -->
+    <div class="column" id="portuguese-column">
+        <!-- Buttons for Portuguese words/phrases will be inserted here -->
+    </div>
+</div>
+
+<script>
+    // Initialize game state variables
+    let score = 0;
+    let selectedEnglish = null; // Store the selected English word
+    let wordsList = []; // Store the pairs of words from the selected category
+    let isBlocked = false; // New: to block interaction during animation
+
+    // Function to update score display
+    function updateScore(value) {
+        score += value;
+        if (score < 0) score = 0; // Score cannot go below 0
+        document.getElementById('score').textContent = `Score: ${score}`;
+    }
+
+    // Function to shuffle an array (Fisher-Yates shuffle algorithm)
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // Function to handle matching logic
+    // Function to handle matching logic
+    function handleMatch(portugueseButton) {
+        if (isBlocked) return; // Block all interactions if an animation is running
+
+        if (selectedEnglish) {
+            const englishWord = selectedEnglish.dataset.word;
+            const portugueseWord = portugueseButton.dataset.word;
+
+            // Block further clicks during the processing
+            isBlocked = true;
+
+            if (englishWord === portugueseWord) {
+                // Correct match: highlight both in green
+                selectedEnglish.classList.add('success');
+                portugueseButton.classList.add('success');
+
+                setTimeout(() => {
+                    // Smoothly hide both selected buttons
+                    selectedEnglish.classList.add('hidden');
+                    portugueseButton.classList.add('hidden');
+
+                    // Remove buttons from the DOM after the fade out completes
+                    setTimeout(() => {
+                        selectedEnglish.remove();
+                        portugueseButton.remove();
+                        selectedEnglish = null; // Reset selection
+                        isBlocked = false; // Allow further clicks
+                    }, 300); // Wait for the fade out animation to complete
+                }, 1000); // Keep buttons highlighted for 1 second before hiding
+
+                updateScore(50); // Add points
+            } else {
+                // Incorrect match: highlight both in red
+                selectedEnglish.classList.add('error');
+                portugueseButton.classList.add('error');
+
+                setTimeout(() => {
+                    // Remove error class and deselect
+                    selectedEnglish.classList.remove('error', 'selected');
+                    portugueseButton.classList.remove('error');
+                    selectedEnglish = null; // Reset selection
+                    isBlocked = false; // Allow further clicks
+                }, 1000); // Keep buttons highlighted for 1 second
+                updateScore(-50); // Deduct points
+            }
+        }
+    }
+
+    // Function to handle English word selection with toggle feature
+    function handleEnglishSelection(button) {
+        if (isBlocked) return; // Block if animation is still running
+
+        if (selectedEnglish === button) {
+            // If the same button is clicked again, deselect it
+            button.classList.remove('selected');
+            selectedEnglish = null; // Clear the selection
+        } else {
+            // Otherwise, select the button and highlight it
+            if (selectedEnglish) {
+                selectedEnglish.classList.remove('selected'); // Deselect previous
+            }
+            button.classList.add('selected');
+            selectedEnglish = button; // Set the new selected button
+        }
+    }
+
+    // Function to load words and categories from the JSON file
+    function loadWords() {
+        fetch('words_A1.json') // Fetch the words and phrases from the JSON file
+            .then(response => response.json())
+            .then(data => {
+                // Display category buttons for each category in the JSON file
+                const categorySelection = document.getElementById('category-selection');
+                Object.keys(data).forEach(category => {
+                    const button = document.createElement('button');
+                    button.textContent = category.replace(/_/g, ' ').toUpperCase(); // Display category name
+                    button.classList.add('category-button');
+                    button.onclick = () => startGame(category, data[category]); // Start game with selected category
+                    categorySelection.appendChild(button);
+                });
+            });
+    }
+
+    // Function to start the game with the selected category
+    function startGame(categoryName, words) {
+        document.getElementById('category-selection').style.display = 'none'; // Hide category selection
+        document.getElementById('game-container').style.display = 'flex'; // Show the game container
+
+        // Store the selected category's words
+        wordsList = words;
+
+        // Shuffle both English and Portuguese words independently
+        shuffleArray(wordsList);
+
+        // Display shuffled English words
+        const englishColumn = document.getElementById('english-column');
+        wordsList.forEach((word, index) => {
+            const button = document.createElement('button');
+            button.textContent = word.English;
+            button.dataset.word = word.Portuguese; // Store Portuguese translation in data attribute
+            button.onclick = () => handleEnglishSelection(button); // Attach selection logic
+            englishColumn.appendChild(button);
+        });
+
+        // Shuffle Portuguese words again and display them
+        const portugueseColumn = document.getElementById('portuguese-column');
+        const shuffledPortuguese = [...wordsList];
+        shuffleArray(shuffledPortuguese);
+        shuffledPortuguese.forEach((word, index) => {
+            const button = document.createElement('button');
+            button.textContent = word.Portuguese;
+            button.dataset.word = word.Portuguese; // Store Portuguese word in data attribute
+            button.onclick = () => handleMatch(button); // Attach match handling logic
+            portugueseColumn.appendChild(button);
+        });
+    }
+
+    // Load words when the page loads
+    window.onload = loadWords;
+
+</script>
+</body>
+</html>

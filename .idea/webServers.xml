@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="10c665c2-fa02-47b5-9b6b-f2502b5a0de9" name="zzz.com.ua" url="http://portuguese.zzz.com.ua">
+        <fileTransfer accessType="FTPS" host="portuguese.zzz.com.ua" port="21">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
